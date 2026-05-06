@@ -43,6 +43,7 @@ class ball
 				}
 				
 			}
+			friend void moveAIPaddle(ball &b , paddle &p);
 			friend void checkCollision(ball &b,paddle &p);
 };
 
@@ -102,21 +103,43 @@ class paddle
 				}
 				
 			}
+friend void moveAIPaddle(ball &b , paddle &p);			
 friend void checkCollision(ball &b , paddle &p);			
 };
 
 int hits=0;
 void checkCollision(ball &b ,paddle &p)
 {
-	 
 	if((b.ballCenterX)-(b.ballRadius)<=p.paddleX+p.paddleWidth && b.ballCenterY>=p.paddleY && b.ballCenterY<p.paddleY+p.paddleHieght)
 	{
 		b.ballSpeedX*=-1;
 		hits++;
-	}
-	
+	}	
 }
+void moveAIPaddle(ball &b, paddle &p)
+{
+    int speed = 4; 
 
+    
+    if (b.ballCenterY < p.paddleY + p.paddleHieght / 2)
+    {
+        p.paddleY -= speed;
+    }
+    else if (b.ballCenterY > p.paddleY + p.paddleHieght / 2)
+    {
+        p.paddleY += speed;
+    }
+
+    
+    if (p.paddleY <= 0)
+    {
+        p.paddleY = 0;
+    }
+    if (p.paddleY >= screenHieght - p.paddleHieght)
+    {
+        p.paddleY = screenHieght - p.paddleHieght;
+    }
+}
 int main()
 {
 SetTargetFPS(60); 
@@ -141,8 +164,11 @@ paddle p2(screenWidth - 30 - 25, (screenHieght - 125) / 2, 125, 25,WHITE);
 		p1.movePaddle();
 		p1.stopPaddle();
 		p2.drawPaddle();
+		moveAIPaddle(b1, p2);
+		
 		DrawText(("Hits: " + std::to_string(hits)).c_str() , 20 , 20,20 , WHITE);
 		EndDrawing();
 	}
 	CloseWindow();
 }
+
