@@ -2,173 +2,241 @@
 #include <raylib.h>
 using namespace std;
 
-int screenWidth=800;
-int screenHieght=600;
-class paddle;	
-class ball
+class Ball{
+private:
+int ballCentreX;
+int ballCentreY;
+int ballRadius;
+int ballSpeedX;
+int ballSpeedY;
+int playerScore;
+int computerScore;
+Color ballColor;
+public:
+Ball()
 {
-	private:
-		int ballCenterX;
-		int ballCenterY;
-		int ballRadius;
-		int ballSpeedX;
-		int ballSpeedY;
-		Color ballColor;
-		public:
-			ball(int x,int y,int r,int ballSpeedX,int ballSpeedY,Color color)
-			{
-				ballCenterX=x;
-				ballCenterY=y;
-				ballRadius=r;
-				ballColor=color;
-				this->ballSpeedX=ballSpeedX;
-				this->ballSpeedY=ballSpeedY;
-			}
-			void drawBall()
-			{
-			DrawCircle(ballCenterX,ballCenterY,ballRadius,WHITE);	
-			}
-			void updateBallpos()
-			{
-				ballCenterX=ballCenterX+ballSpeedX;
-				ballCenterY=ballCenterY+ballSpeedY;
-				
-				if(ballCenterX+ballRadius>=screenWidth or ballCenterX-ballRadius<=0)
-				{
-					ballSpeedX*=-1;
-				}
-				if(ballCenterY+ballRadius>=screenHieght or ballCenterY-ballRadius<=0)
-				{
-					ballSpeedY*=-1;
-				}
-				
-			}
-			friend void moveAIPaddle(ball &b , paddle &p);
-			friend void checkCollision(ball &b,paddle &p);
-};
-
-class paddle
-{
-	private:
-		int paddleX;
-		int paddleY;
-		int paddleHieght;
-		int paddleWidth;
-		int paddleSpeedY;
-		Color paddleColor;
-		
-		public:
-			paddle(int px,int py,int paddleHieght,int paddleWidth,Color color)
-			{
-				paddleX=px;
-				paddleY=py;
-				this->paddleHieght=paddleHieght;
-				this->paddleWidth=paddleWidth;
-				paddleColor=color;
-				
-			}
-			
-			void drawPaddle()
-			{
-				DrawRectangle(paddleX,paddleY,paddleWidth,paddleHieght,WHITE);
-			}
-			void movePaddle()
-			{
-				paddleSpeedY=5;
-				if(IsKeyDown(KEY_UP))
-				{	
-				paddleY-=paddleSpeedY;
-						
-				}
-				 if(IsKeyDown(KEY_DOWN))
-				{
-												
-		          paddleY+=paddleSpeedY;
-				  							
-				}
-				else{
-					paddleSpeedY=0;
-				}
-				
-			}
-			void stopPaddle()
-			{
-				if(paddleY<=0)
-				{
-					paddleY=0;
-				}
-				if(paddleY>=screenHieght-paddleHieght)
-				{
-					paddleY=screenHieght-paddleHieght;
-				}
-				
-			}
-friend void moveAIPaddle(ball &b , paddle &p);			
-friend void checkCollision(ball &b , paddle &p);			
-};
-
-int hits=0;
-void checkCollision(ball &b ,paddle &p)
-{
-	if((b.ballCenterX)-(b.ballRadius)<=p.paddleX+p.paddleWidth && b.ballCenterY>=p.paddleY && b.ballCenterY<p.paddleY+p.paddleHieght)
-	{
-		b.ballSpeedX*=-1;
-		hits++;
-	}	
+    ballCentreX=400;
+    ballCentreY=300;
+    ballRadius=20;
+    ballSpeedX=5;
+    ballSpeedY=5;
+    playerScore=0;
+    computerScore=0;    
+    ballColor=WHITE;
 }
-void moveAIPaddle(ball &b, paddle &p)
-{
-    int speed = 4; 
-
+    void setBallSpeed(float ballSpeedX,float ballSpeedY)
+    {
+        this->ballSpeedX=ballSpeedX;
+        this->ballSpeedY=ballSpeedY;
+    }
     
-    if (b.ballCenterY < p.paddleY + p.paddleHieght / 2)
+    int getPlayerScore()
     {
-        p.paddleY -= speed;
+        return playerScore;
     }
-    else if (b.ballCenterY > p.paddleY + p.paddleHieght / 2)
+    int getComputerScore()
     {
-        p.paddleY += speed;
+        return computerScore;
+    }
+    void moveBall()
+    {
+        ballCentreX+=ballSpeedX;
+        ballCentreY+=ballSpeedY;
+        
+    }
+    void resetBall()
+    {
+        ballCentreX=GetScreenWidth() /2;
+        ballCentreY=GetScreenHeight() /2;
+        ballSpeedX*=-1;
+    }
+    void checkGameScore()
+    {
+        if(ballCentreX-ballRadius <=0)
+        {
+            computerScore++;
+            resetBall();
+
+        }
+        if(ballCentreX + ballRadius >=GetScreenWidth())
+        {
+            playerScore++;
+            resetBall();
+        }
+    }
+    void resetScore()
+    {
+        if(playerScore==10 or computerScore==10)
+        {
+            playerScore=0;
+            computerScore=0;
+        }
+    }
+    void playerWin()
+    {
+        if(playerScore==10)
+        {
+            DrawText("You Won",GetScreenWidth()/2 ,GetScreenHeight()/2,50,GOLD);
+            
+        }
+    }
+    void computerWin()
+    {
+        if(computerScore==10)
+        {
+            DrawText("You Lost",GetScreenWidth()/2,GetScreenHeight()/2,50,GOLD);
+            
+        }
+    }
+    void checkCollision()
+    {
+        if(ballCentreY+ballRadius>=GetScreenHeight() || ballCentreY-ballRadius<=0)
+        {
+            ballSpeedY*=-1;
+        }
+    }
+    void update()
+    {
+        moveBall();
+        checkCollision();
+        checkGameScore();
+        
+    }
+    void drawBall()
+    {
+        DrawCircle(ballCentreX,ballCentreY,ballRadius,ballColor);
     }
 
-    
-    if (p.paddleY <= 0)
-    {
-        p.paddleY = 0;
-    }
-    if (p.paddleY >= screenHieght - p.paddleHieght)
-    {
-        p.paddleY = screenHieght - p.paddleHieght;
-    }
-}
-int main()
+int getBallCentreY()
 {
-SetTargetFPS(60); 
-ball b1(400,300,30,5,5,WHITE);
-
-
-paddle p1(30, (screenHieght - 125)/2, 125, 25, WHITE); 
-paddle p2(screenWidth - 30 - 25, (screenHieght - 125) / 2, 125, 25,WHITE);
-
-
-	InitWindow(screenWidth,screenHieght,"My first Game");
-	
-	
-	while(!WindowShouldClose())
-	{			
-		BeginDrawing();
-		ClearBackground(BLACK);
-		b1.drawBall();
-		b1.updateBallpos();
-		checkCollision(b1, p1);
-		p1.drawPaddle();
-		p1.movePaddle();
-		p1.stopPaddle();
-		p2.drawPaddle();
-		moveAIPaddle(b1, p2);
-		
-		DrawText(("Hits: " + std::to_string(hits)).c_str() , 20 , 20,20 , WHITE);
-		EndDrawing();
-	}
-	CloseWindow();
+    return ballCentreY;
 }
+};
+class Paddle{
+    protected:
+    int paddleCentreX;
+    int paddleCentreY;
+    int paddleWidth;
+    int paddleHieght;
+    int paddleSpeedY;
+    int paddleSpeedX;
+    Color paddleColor;
+    public:
+    Paddle(int paddleCentreX,int paddleHieght,int paddleWidth,int paddleCentreY)
+    {
+        this->paddleCentreX=paddleCentreX;
+        this->paddleHieght=paddleHieght;
+        this->paddleWidth=paddleWidth;
+        this->paddleCentreY=paddleCentreY;
+        paddleSpeedY=5;
+        paddleSpeedX=10;
+        paddleColor=WHITE;
+    }
+    virtual void drawPaddle()=0;
+    virtual void movePaddle()=0;
 
+};
+class HumanPaddle:public Paddle
+{
+    public:
+    HumanPaddle():Paddle(25,125,20,(GetScreenHeight()-125)/2)
+    {
+    }
+    void drawPaddle()
+    {
+        DrawRectangle(paddleCentreX,paddleCentreY,paddleWidth,paddleHieght,paddleColor);
+    }
+    void movePaddle()
+    {
+        if(IsKeyDown(KEY_UP))
+        {
+            paddleCentreY-=paddleSpeedY;
+            
+        }
+        if(paddleCentreY<=0 )
+        {
+            paddleCentreY=0;
+        }
+        if(paddleCentreY+paddleHieght>GetScreenHeight())
+        {
+            paddleCentreY=GetScreenHeight()-paddleHieght;
+        }
+        if(IsKeyDown(KEY_DOWN))
+        {
+            paddleCentreY+=paddleSpeedY;
+        }
+        
+    }
+};
+class ComputerPaddle:public Paddle
+{
+    private:
+    Ball *ball;
+    public:
+    ComputerPaddle(Ball *b):Paddle(GetScreenWidth()-40,125,20,(GetScreenHeight()-125)/2)
+    {
+        ball=b;
+    }
+    void drawPaddle()
+    {
+        DrawRectangle(paddleCentreX,paddleCentreY,paddleWidth,paddleHieght,paddleColor);
+    }
+    void movePaddle()
+    {
+       int paddleMiddle=paddleCentreY+paddleHieght/2;
+       if(ball->getBallCentreY() >= paddleMiddle)
+       {
+        paddleCentreY+=paddleSpeedY;
+       } 
+       else if(ball->getBallCentreY() <= paddleMiddle)
+       {
+        paddleCentreY-=paddleSpeedY;
+       }
+       if(paddleCentreY<=0)
+       {
+        paddleCentreY=0;
+       }
+       if(paddleCentreY+paddleHieght >=GetScreenHeight())
+       {
+        paddleCentreY=GetScreenHeight()-paddleHieght;
+       }
+    }
+        
+    };
+
+
+
+int main () {
+
+ 
+const int screenWidth = 800;
+const int screenHieght = 600;
+    InitWindow(screenWidth, screenHieght, "Classic Pong:1980s");
+    SetTargetFPS(60);
+Ball b1;
+Paddle *p1;
+p1=new HumanPaddle();
+Paddle *p2;
+p2=new ComputerPaddle(&b1);
+
+    while (WindowShouldClose() == false){
+    
+        
+        BeginDrawing();
+        ClearBackground(BLACK);
+        b1.update();
+        b1.drawBall();
+        DrawText(TextFormat("%i",b1.getPlayerScore()),300,20,40,GOLD);
+        DrawText(TextFormat("%i",b1.getComputerScore()),500,20,40,GOLD);
+        b1.playerWin();
+        b1.computerWin();
+        b1.resetScore();
+        p1->drawPaddle();
+        p1->movePaddle();
+        p2->drawPaddle();
+        p2->movePaddle();        
+        EndDrawing();
+    }
+
+    CloseWindow();
+}
