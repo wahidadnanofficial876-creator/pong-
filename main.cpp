@@ -2,6 +2,127 @@
 #include <raylib.h>
 using namespace std;
 
+enum GameState
+{
+    MAIN_MENU,
+    DIFFICULTY_MENU,
+    GAMEPLAY
+};
+
+enum Difficulty
+{
+    EASY,
+    MEDIUM,
+    HARD
+};
+
+class GameMenu
+{
+private:
+    GameState currentState;
+    Difficulty selectedDifficulty;
+
+    Rectangle startButton;
+
+    Rectangle easyButton;
+    Rectangle mediumButton;
+    Rectangle hardButton;
+
+public:
+    GameMenu()
+    {
+        currentState = MAIN_MENU;
+        selectedDifficulty = EASY;
+
+        startButton = {300, 250, 200, 60};
+
+        easyButton = {300, 180, 200, 60};
+        mediumButton = {300, 280, 200, 60};
+        hardButton = {300, 380, 200, 60};
+    }
+
+    void Update()
+    {
+        Vector2 mousePos = GetMousePosition();
+
+        
+        if (currentState == MAIN_MENU)
+        {
+            if (CheckCollisionPointRec(mousePos, startButton) &&
+                IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                currentState = DIFFICULTY_MENU;
+            }
+        }
+
+        
+        else if (currentState == DIFFICULTY_MENU)
+        {
+            if (CheckCollisionPointRec(mousePos, easyButton) &&
+                IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                selectedDifficulty = EASY;
+                currentState = GAMEPLAY;
+            }
+
+            if (CheckCollisionPointRec(mousePos, mediumButton) &&
+                IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                selectedDifficulty = MEDIUM;
+                currentState = GAMEPLAY;
+            }
+
+            if (CheckCollisionPointRec(mousePos, hardButton) &&
+                IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                selectedDifficulty = HARD;
+                currentState = GAMEPLAY;
+            }
+        }
+    }
+
+    void Draw()
+{
+    if (currentState == MAIN_MENU)
+    {
+        DrawText("PONG GAME", 250, 120, 50, WHITE);
+
+        DrawRectangleRec(startButton, DARKBLUE);
+        DrawText("START", 350, 268, 25, WHITE);
+    }
+
+    else if (currentState == DIFFICULTY_MENU)
+    {
+        DrawText("SELECT DIFFICULTY", 180, 80, 40, WHITE);
+
+        DrawRectangleRec(easyButton, GREEN);
+        DrawText("EASY", 360, 198, 25, BLACK);
+
+        DrawRectangleRec(mediumButton, ORANGE);
+        DrawText("MEDIUM", 340, 298, 25, BLACK);
+
+        DrawRectangleRec(hardButton, RED);
+        DrawText("HARD", 360, 398, 25, BLACK);
+    }
+}    
+    
+
+
+    Difficulty GetDifficulty()
+    {
+        return selectedDifficulty;
+    }
+
+    bool IsGameStarted()
+    {
+        return currentState == GAMEPLAY;
+    }
+    GameState GetState()
+{
+    return currentState;
+}
+};
+
 class Ball{
 private:
 int ballCentreX;
@@ -94,6 +215,7 @@ Ball()
         {
             ballSpeedY*=-1;
         }
+        
     }
     void update()
     {
@@ -106,10 +228,56 @@ Ball()
     {
         DrawCircle(ballCentreX,ballCentreY,ballRadius,ballColor);
     }
-
+int getBallCentreX()
+{
+    return ballCentreX;
+}
 int getBallCentreY()
 {
     return ballCentreY;
+}
+int getBallSpeedX()
+{
+    return ballSpeedX;
+}
+int getBallSpeedY()
+{
+    return ballSpeedY;
+}
+int getBallRadius()
+{
+    return ballRadius;
+}
+void reverseBallSpeedX()
+{
+    ballSpeedX*=-1;
+    
+}
+void increaseBallSpeed()
+{
+    if(abs(ballSpeedX) < 10)
+    {
+        if(ballSpeedX > 0)
+        {
+            ballSpeedX++;
+        }
+        else
+        {
+            ballSpeedX--;
+        }
+    }
+
+    if(abs(ballSpeedY) < 10)
+    {
+        if(ballSpeedY > 0)
+        {
+            ballSpeedY++;
+        }
+        else
+        {
+            ballSpeedY--;
+        }
+    }
 }
 };
 class Paddle{
@@ -134,17 +302,30 @@ class Paddle{
     }
     virtual void drawPaddle()=0;
     virtual void movePaddle()=0;
-
+    virtual void checkCollisionWithPaddle()=0;
+    
 };
 class HumanPaddle:public Paddle
 {
+    private:
+    Ball *ball;
     public:
-    HumanPaddle():Paddle(25,125,20,(GetScreenHeight()-125)/2)
+    HumanPaddle(Ball *b):Paddle(25,125,20,(GetScreenHeight()-125)/2)
     {
+        ball=b;
     }
     void drawPaddle()
     {
         DrawRectangle(paddleCentreX,paddleCentreY,paddleWidth,paddleHieght,paddleColor);
+    }
+    void changeHumanPaddleSpeed()
+    {
+        if(IsKeyPressed(KEY_SPACE))
+        {
+            paddleSpeedY+=5;
+            
+        }
+        
     }
     void movePaddle()
     {
@@ -167,16 +348,31 @@ class HumanPaddle:public Paddle
         }
         
     }
+    void checkCollisionWithPaddle()
+    {
+        if(ball->getBallCentreX() - ball->getBallRadius() <= paddleCentreX+paddleWidth
+        &&
+    ball->getBallCentreY() >= paddleCentreY
+   &&
+   ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+        {
+            ball->reverseBallSpeedX();
+            ball->increaseBallSpeed();
+        }
+    }
 };
+
 class ComputerPaddle:public Paddle
 {
     private:
     Ball *ball;
+    bool isLeftPaddle;
     public:
-    ComputerPaddle(Ball *b):Paddle(GetScreenWidth()-40,125,20,(GetScreenHeight()-125)/2)
-    {
-        ball=b;
-    }
+ ComputerPaddle(Ball *b,int xPosition,bool isLeft) :Paddle(xPosition,125,20,(GetScreenHeight()-125)/2)
+{
+    ball=b;
+    isLeftPaddle=isLeft;
+}
     void drawPaddle()
     {
         DrawRectangle(paddleCentreX,paddleCentreY,paddleWidth,paddleHieght,paddleColor);
@@ -201,8 +397,42 @@ class ComputerPaddle:public Paddle
         paddleCentreY=GetScreenHeight()-paddleHieght;
        }
     }
+   void checkCollisionWithPaddle()
+{
+    
+    if(isLeftPaddle)
+    {
+        if(ball->getBallSpeedX() < 0 &&
+           ball->getBallCentreX() - ball->getBallRadius() <= paddleCentreX + paddleWidth
+           &&
+           ball->getBallCentreY() >= paddleCentreY
+           &&
+           ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+        {
+            ball->reverseBallSpeedX();
+            ball->increaseBallSpeed();
+        }
+    }
+
+    else
+    {
+        if(ball->getBallSpeedX() > 0 &&
+           ball->getBallCentreX() + ball->getBallRadius() >= paddleCentreX
+           &&
+           ball->getBallCentreY() >= paddleCentreY
+           &&
+           ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+        {
+            ball->reverseBallSpeedX();
+            ball->increaseBallSpeed();
+        }
+    }
+}
+    
+};
+   
         
-    };
+    
 
 
 
@@ -214,29 +444,66 @@ const int screenHieght = 600;
     InitWindow(screenWidth, screenHieght, "Classic Pong:1980s");
     SetTargetFPS(60);
 Ball b1;
-Paddle *p1;
-p1=new HumanPaddle();
-Paddle *p2;
-p2=new ComputerPaddle(&b1);
+HumanPaddle *player;
+player = new HumanPaddle(&b1);
 
-    while (WindowShouldClose() == false){
+ComputerPaddle *aiLeft;
+aiLeft = new ComputerPaddle(&b1,25,true);
+
+ComputerPaddle *aiRight;
+aiRight = new ComputerPaddle(&b1,GetScreenWidth()-40,false);
+GameMenu menu;
+
+    while (WindowShouldClose() == false)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
     
-        
-        BeginDrawing();
-        ClearBackground(BLACK);
-        b1.update();
-        b1.drawBall();
-        DrawText(TextFormat("%i",b1.getPlayerScore()),300,20,40,GOLD);
-        DrawText(TextFormat("%i",b1.getComputerScore()),500,20,40,GOLD);
-        b1.playerWin();
-        b1.computerWin();
-        b1.resetScore();
-        p1->drawPaddle();
-        p1->movePaddle();
-        p2->drawPaddle();
-        p2->movePaddle();        
-        EndDrawing();
-    }
+    menu.Update();
+    menu.Draw();
 
-    CloseWindow();
+    if(menu.GetState() == MAIN_MENU)
+{
+    b1.update();
+
+    aiLeft->movePaddle();
+    aiRight->movePaddle();
+
+    aiLeft->drawPaddle();
+    aiRight->drawPaddle();
+
+    aiLeft->checkCollisionWithPaddle();
+    aiRight->checkCollisionWithPaddle();
+
+    b1.drawBall();
+
+    menu.Draw();
+}
+
+    else if(menu.IsGameStarted())
+{
+    
+    b1.update();
+    player->movePaddle();
+    aiRight->movePaddle();
+
+    player->drawPaddle();
+    aiRight->drawPaddle();
+DrawText(TextFormat("%i", b1.getPlayerScore()), 300, 20, 40, GOLD);
+DrawText(TextFormat("%i", b1.getComputerScore()), 500, 20, 40, GOLD);
+   
+player->checkCollisionWithPaddle();
+aiRight->checkCollisionWithPaddle();
+player->changeHumanPaddleSpeed();
+
+    
+    b1.playerWin();
+    b1.computerWin();
+    b1.resetScore();
+    b1.drawBall();
+}
+
+    EndDrawing();
+}    
 }
