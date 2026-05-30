@@ -1,5 +1,5 @@
-#include <iostream>
 #include <raylib.h>
+#include <iostream>
 using namespace std;
 
 enum GameState
@@ -121,6 +121,7 @@ public:
 {
     return currentState;
 }
+
 };
 
 class Ball{
@@ -296,7 +297,7 @@ class Paddle{
         this->paddleHieght=paddleHieght;
         this->paddleWidth=paddleWidth;
         this->paddleCentreY=paddleCentreY;
-        paddleSpeedY=5;
+        paddleSpeedY=10;
         paddleSpeedX=10;
         paddleColor=WHITE;
     }
@@ -318,15 +319,7 @@ class HumanPaddle:public Paddle
     {
         DrawRectangle(paddleCentreX,paddleCentreY,paddleWidth,paddleHieght,paddleColor);
     }
-    void changeHumanPaddleSpeed()
-    {
-        if(IsKeyPressed(KEY_SPACE))
-        {
-            paddleSpeedY+=5;
-            
-        }
-        
-    }
+    
     void movePaddle()
     {
         if(IsKeyDown(KEY_UP))
@@ -380,11 +373,11 @@ class ComputerPaddle:public Paddle
     void movePaddle()
     {
        int paddleMiddle=paddleCentreY+paddleHieght/2;
-       if(ball->getBallCentreY() >= paddleMiddle)
+       if(ball->getBallCentreY() >= paddleMiddle+5)
        {
         paddleCentreY+=paddleSpeedY;
        } 
-       else if(ball->getBallCentreY() <= paddleMiddle)
+       else if(ball->getBallCentreY() <= paddleMiddle-5)
        {
         paddleCentreY-=paddleSpeedY;
        }
@@ -428,7 +421,14 @@ class ComputerPaddle:public Paddle
         }
     }
 }
-    
+    void setAISpeed(int paddleSpeedY)
+    {
+        this->paddleSpeedY=paddleSpeedY;
+    }
+   int getAISpeed()
+   {
+        return paddleSpeedY;    
+   } 
 };
    
         
@@ -461,6 +461,18 @@ GameMenu menu;
 
     
     menu.Update();
+    if(menu.GetDifficulty()==EASY)
+    {
+        aiRight->setAISpeed(5);
+    }
+    else if(menu.GetDifficulty()==MEDIUM)
+    {
+        aiRight->setAISpeed(7);
+    }
+    else
+    {
+        aiRight->setAISpeed(9);
+    }
     menu.Draw();
 
     if(menu.GetState() == MAIN_MENU)
@@ -495,7 +507,7 @@ DrawText(TextFormat("%i", b1.getComputerScore()), 500, 20, 40, GOLD);
    
 player->checkCollisionWithPaddle();
 aiRight->checkCollisionWithPaddle();
-player->changeHumanPaddleSpeed();
+
 
     
     b1.playerWin();
