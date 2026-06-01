@@ -27,6 +27,8 @@ private:
     Rectangle easyButton;
     Rectangle mediumButton;
     Rectangle hardButton;
+    Music menuMusic;
+    int selectedOption;
 
 public:
     GameMenu()
@@ -35,17 +37,35 @@ public:
         selectedDifficulty = EASY;
 
         startButton = {300, 250, 200, 60};
-
         easyButton = {300, 180, 200, 60};
         mediumButton = {300, 280, 200, 60};
         hardButton = {300, 380, 200, 60};
+        selectedOption = 0;
+        menuMusic = LoadMusicStream("Assets/menu.mp3");
+        PlayMusicStream(menuMusic);
     }
 
+    void audioManager()
+    {
+        if (currentState == MAIN_MENU ||
+            currentState == DIFFICULTY_MENU)
+        {
+            if (!IsMusicStreamPlaying(menuMusic))
+            {
+                PlayMusicStream(menuMusic);
+            }
+
+            UpdateMusicStream(menuMusic);
+        }
+        else
+        {
+            StopMusicStream(menuMusic);
+        }
+    }
     void Update()
     {
         Vector2 mousePos = GetMousePosition();
 
-        
         if (currentState == MAIN_MENU)
         {
             if (CheckCollisionPointRec(mousePos, startButton) &&
@@ -53,11 +73,48 @@ public:
             {
                 currentState = DIFFICULTY_MENU;
             }
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                currentState = DIFFICULTY_MENU;
+            }
         }
 
-        
         else if (currentState == DIFFICULTY_MENU)
         {
+            if (IsKeyPressed(KEY_UP))
+            {
+                selectedOption--;
+                if (selectedOption < 0)
+                {
+                    selectedOption = 2;
+                }
+            }
+            if (IsKeyPressed(KEY_DOWN))
+            {
+                selectedOption++;
+                if (selectedOption > 2)
+                {
+                    selectedOption = 0;
+                }
+            }
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                if (selectedOption == 0)
+                {
+                    selectedDifficulty = EASY;
+                    currentState = GAMEPLAY;
+                }
+                else if (selectedOption == 1)
+                {
+                    selectedDifficulty = MEDIUM;
+                    currentState = GAMEPLAY;
+                }
+                else if (selectedOption == 2)
+                {
+                    selectedDifficulty = HARD;
+                    currentState = GAMEPLAY;
+                }
+            }
             if (CheckCollisionPointRec(mousePos, easyButton) &&
                 IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
             {
@@ -82,31 +139,44 @@ public:
     }
 
     void Draw()
-{
-    if (currentState == MAIN_MENU)
     {
-        DrawText("PONG GAME", 250, 120, 50, WHITE);
+        if (currentState == MAIN_MENU)
+        {
+            DrawText("PONG GAME", 250, 120, 50, WHITE);
 
-        DrawRectangleRec(startButton, DARKBLUE);
-        DrawText("START", 350, 268, 25, WHITE);
+            DrawRectangleRec(startButton, DARKBLUE);
+            DrawText("START", 350, 268, 25, WHITE);
+        }
+
+        else if (currentState == DIFFICULTY_MENU)
+        {
+            DrawText("SELECT DIFFICULTY", 180, 80, 40, WHITE);
+
+            DrawRectangleRec(easyButton, LIGHTGRAY);
+            DrawRectangleRec(mediumButton, LIGHTGRAY);
+            DrawRectangleRec(hardButton, LIGHTGRAY);
+            if (selectedOption == 0)
+            {
+                DrawRectangleLinesEx(easyButton, 4, YELLOW);
+            }
+            if (selectedOption == 1)
+            {
+                DrawRectangleLinesEx(mediumButton, 4, YELLOW);
+            }
+            if (selectedOption == 2)
+            {
+                DrawRectangleLinesEx(hardButton, 4, YELLOW);
+            }
+
+            DrawText("EASY", 360, 198, 25, BLACK);
+            DrawText("MEDIUM", 340, 298, 25, BLACK);
+            DrawText("HARD", 360, 398, 25, BLACK);
+        }
+        if (currentState == GAMEPLAY)
+        {
+            DrawText("PRESS R TO RESTART GAME", 250, 80, 20, GOLD);
+        }
     }
-
-    else if (currentState == DIFFICULTY_MENU)
-    {
-        DrawText("SELECT DIFFICULTY", 180, 80, 40, WHITE);
-
-        DrawRectangleRec(easyButton, GREEN);
-        DrawText("EASY", 360, 198, 25, BLACK);
-
-        DrawRectangleRec(mediumButton, ORANGE);
-        DrawText("MEDIUM", 340, 298, 25, BLACK);
-
-        DrawRectangleRec(hardButton, RED);
-        DrawText("HARD", 360, 398, 25, BLACK);
-    }
-}    
-    
-
 
     Difficulty GetDifficulty()
     {
@@ -118,40 +188,52 @@ public:
         return currentState == GAMEPLAY;
     }
     GameState GetState()
-{
-    return currentState;
-}
-
+    {
+        return currentState;
+    }
+    void getGameState(GameState state)
+    {
+        currentState = state;
+    }
+    ~GameMenu()
+    {
+        UnloadMusicStream(menuMusic);
+    }
 };
 
-class Ball{
-private:
-int ballCentreX;
-int ballCentreY;
-int ballRadius;
-int ballSpeedX;
-int ballSpeedY;
-int playerScore;
-int computerScore;
-Color ballColor;
-public:
-Ball()
+class Ball
 {
-    ballCentreX=400;
-    ballCentreY=300;
-    ballRadius=20;
-    ballSpeedX=5;
-    ballSpeedY=5;
-    playerScore=0;
-    computerScore=0;    
-    ballColor=WHITE;
-}
-    void setBallSpeed(float ballSpeedX,float ballSpeedY)
+private:
+    int ballCentreX;
+    int ballCentreY;
+    int ballRadius;
+    int ballSpeedX;
+    int ballSpeedY;
+    int playerScore;
+    int computerScore;
+    Sound ballHit;
+    Color ballColor;
+
+public:
+    Ball()
     {
-        this->ballSpeedX=ballSpeedX;
-        this->ballSpeedY=ballSpeedY;
+        ballCentreX = 400;
+        ballCentreY = 300;
+        ballRadius = 20;
+        ballSpeedX = 5;
+        ballSpeedY = 5;
+        playerScore = 0;
+        computerScore = 0;
+        ballColor = WHITE;
+        ballHit = LoadSound("Assets/paddle.wav");
     }
-    
+
+    void setBallSpeed(float ballSpeedX, float ballSpeedY)
+    {
+        this->ballSpeedX = ballSpeedX;
+        this->ballSpeedY = ballSpeedY;
+    }
+
     int getPlayerScore()
     {
         return playerScore;
@@ -162,25 +244,23 @@ Ball()
     }
     void moveBall()
     {
-        ballCentreX+=ballSpeedX;
-        ballCentreY+=ballSpeedY;
-        
+        ballCentreX += ballSpeedX;
+        ballCentreY += ballSpeedY;
     }
     void resetBall()
     {
-        ballCentreX=GetScreenWidth() /2;
-        ballCentreY=GetScreenHeight() /2;
-        ballSpeedX*=-1;
+        ballCentreX = GetScreenWidth() / 2;
+        ballCentreY = GetScreenHeight() / 2;
+        ballSpeedX *= -1;
     }
     void checkGameScore()
     {
-        if(ballCentreX-ballRadius <=0)
+        if (ballCentreX - ballRadius <= 0)
         {
             computerScore++;
             resetBall();
-
         }
-        if(ballCentreX + ballRadius >=GetScreenWidth())
+        if (ballCentreX + ballRadius >= GetScreenWidth())
         {
             playerScore++;
             resetBall();
@@ -188,101 +268,204 @@ Ball()
     }
     void resetScore()
     {
-        if(playerScore==10 or computerScore==10)
+        if (playerScore == 10 or computerScore == 10)
         {
-            playerScore=0;
-            computerScore=0;
+            playerScore = 0;
+            computerScore = 0;
         }
     }
-    void playerWin()
-    {
-        if(playerScore==10)
-        {
-            DrawText("You Won",GetScreenWidth()/2 ,GetScreenHeight()/2,50,GOLD);
-            
-        }
-    }
-    void computerWin()
-    {
-        if(computerScore==10)
-        {
-            DrawText("You Lost",GetScreenWidth()/2,GetScreenHeight()/2,50,GOLD);
-            
-        }
-    }
+
     void checkCollision()
     {
-        if(ballCentreY+ballRadius>=GetScreenHeight() || ballCentreY-ballRadius<=0)
+        if (ballCentreY + ballRadius >= GetScreenHeight() || ballCentreY - ballRadius <= 0)
         {
-            ballSpeedY*=-1;
+            ballSpeedY *= -1;
         }
-        
     }
     void update()
     {
         moveBall();
         checkCollision();
         checkGameScore();
-        
     }
     void drawBall()
     {
-        DrawCircle(ballCentreX,ballCentreY,ballRadius,ballColor);
+        DrawCircle(ballCentreX, ballCentreY, ballRadius, ballColor);
     }
-int getBallCentreX()
-{
-    return ballCentreX;
-}
-int getBallCentreY()
-{
-    return ballCentreY;
-}
-int getBallSpeedX()
-{
-    return ballSpeedX;
-}
-int getBallSpeedY()
-{
-    return ballSpeedY;
-}
-int getBallRadius()
-{
-    return ballRadius;
-}
-void reverseBallSpeedX()
-{
-    ballSpeedX*=-1;
-    
-}
-void increaseBallSpeed()
-{
-    if(abs(ballSpeedX) < 10)
+    int getBallCentreX()
     {
-        if(ballSpeedX > 0)
+        return ballCentreX;
+    }
+    int getBallCentreY()
+    {
+        return ballCentreY;
+    }
+    int getBallSpeedX()
+    {
+        return ballSpeedX;
+    }
+    int getBallSpeedY()
+    {
+        return ballSpeedY;
+    }
+    int getBallRadius()
+    {
+        return ballRadius;
+    }
+    void reverseBallSpeedX()
+    {
+        ballSpeedX *= -1;
+    }
+    void increaseBallSpeed()
+    {
+        if (abs(ballSpeedX) < 10)
         {
-            ballSpeedX++;
+            if (ballSpeedX > 0)
+            {
+                ballSpeedX++;
+            }
+            else
+            {
+                ballSpeedX--;
+            }
         }
-        else
+
+        if (abs(ballSpeedY) < 10)
         {
-            ballSpeedX--;
+            if (ballSpeedY > 0)
+            {
+                ballSpeedY++;
+            }
+            else
+            {
+                ballSpeedY--;
+            }
+        }
+    }
+    void playBallSound()
+    {
+        if (getBallCentreY() + getBallRadius() >= GetScreenHeight() ||
+            getBallCentreY() - getBallRadius() <= 0)
+        {
+            playCollisionSound();
         }
     }
 
-    if(abs(ballSpeedY) < 10)
+    void restartGame()
     {
-        if(ballSpeedY > 0)
+        playerScore = 0;
+        computerScore = 0;
+
+        ballCentreX = GetScreenWidth() / 2;
+        ballCentreY = GetScreenHeight() / 2;
+
+        ballSpeedX = 5;
+        ballSpeedY = 5;
+    }
+    void updateMenu()
+    {
+        moveBall();
+        checkCollision();
+        if (ballCentreX - ballRadius <= 0)
         {
-            ballSpeedY++;
+            resetBall();
         }
-        else
+        if (ballCentreX + ballRadius >= GetScreenWidth())
         {
-            ballSpeedY--;
+            resetBall();
         }
     }
-}
+    void playCollisionSound()
+    {
+        PlaySound(ballHit);
+    }
+    ~Ball()
+    {
+        UnloadSound(ballHit);
+    }
 };
-class Paddle{
-    protected:
+class GameManager
+{
+private:
+    float messageTimer;
+    bool showMessage;
+
+    enum Winner
+    {
+        NONE,
+        PLAYER,
+        COMPUTER
+    };
+
+    Winner winner;
+
+public:
+    GameManager()
+    {
+        messageTimer = 0.0f;
+        showMessage = false;
+        winner = NONE;
+    }
+
+    void checkWinner(int playerScore, int computerScore)
+    {
+        // Sirf ek baar trigger hoga
+        if (!showMessage)
+        {
+            if (playerScore >= 10)
+            {
+                winner = PLAYER;
+                showMessage = true;
+                messageTimer = 5.0f;
+            }
+            else if (computerScore >= 10)
+            {
+                winner = COMPUTER;
+                showMessage = true;
+                messageTimer = 5.0f;
+            }
+        }
+
+        if (showMessage)
+        {
+            messageTimer -= GetFrameTime();
+
+            if (winner == PLAYER)
+            {
+                DrawText("YOU WON!",
+                         GetScreenWidth() / 2 - 120,
+                         GetScreenHeight() / 2,
+                         50,
+                         GOLD);
+            }
+            else if (winner == COMPUTER)
+            {
+                DrawText("YOU LOST!",
+                         GetScreenWidth() / 2 - 120,
+                         GetScreenHeight() / 2,
+                         50,
+                         RED);
+            }
+
+            
+        }
+    }
+
+    bool isGameOver()
+    {
+        return showMessage;
+    }
+
+    void reset()
+    {
+        messageTimer = 0.0f;
+        showMessage = false;
+        winner = NONE;
+    }
+};
+class Paddle
+{
+protected:
     int paddleCentreX;
     int paddleCentreY;
     int paddleWidth;
@@ -290,64 +473,61 @@ class Paddle{
     int paddleSpeedY;
     int paddleSpeedX;
     Color paddleColor;
-    public:
-    Paddle(int paddleCentreX,int paddleHieght,int paddleWidth,int paddleCentreY)
+
+public:
+    Paddle(int paddleCentreX, int paddleHieght, int paddleWidth, int paddleCentreY)
     {
-        this->paddleCentreX=paddleCentreX;
-        this->paddleHieght=paddleHieght;
-        this->paddleWidth=paddleWidth;
-        this->paddleCentreY=paddleCentreY;
-        paddleSpeedY=10;
-        paddleSpeedX=10;
-        paddleColor=WHITE;
+        this->paddleCentreX = paddleCentreX;
+        this->paddleHieght = paddleHieght;
+        this->paddleWidth = paddleWidth;
+        this->paddleCentreY = paddleCentreY;
+        paddleSpeedY = 10;
+        paddleSpeedX = 10;
+        paddleColor = WHITE;
     }
-    virtual void drawPaddle()=0;
-    virtual void movePaddle()=0;
-    virtual void checkCollisionWithPaddle()=0;
-    
+    virtual void drawPaddle() = 0;
+    virtual void movePaddle() = 0;
+    virtual void checkCollisionWithPaddle() = 0;
 };
-class HumanPaddle:public Paddle
+class HumanPaddle : public Paddle
 {
-    private:
+private:
     Ball *ball;
-    public:
-    HumanPaddle(Ball *b):Paddle(25,125,20,(GetScreenHeight()-125)/2)
+
+public:
+    HumanPaddle(Ball *b) : Paddle(25, 125, 20, (GetScreenHeight() - 125) / 2)
     {
-        ball=b;
+        ball = b;
     }
     void drawPaddle()
     {
-        DrawRectangle(paddleCentreX,paddleCentreY,paddleWidth,paddleHieght,paddleColor);
+        DrawRectangle(paddleCentreX, paddleCentreY, paddleWidth, paddleHieght, paddleColor);
     }
-    
+
     void movePaddle()
     {
-        if(IsKeyDown(KEY_UP))
+        if (IsKeyDown(KEY_UP))
         {
-            paddleCentreY-=paddleSpeedY;
-            
+            paddleCentreY -= paddleSpeedY;
         }
-        if(paddleCentreY<=0 )
+        if (paddleCentreY <= 0)
         {
-            paddleCentreY=0;
+            paddleCentreY = 0;
         }
-        if(paddleCentreY+paddleHieght>GetScreenHeight())
+        if (paddleCentreY + paddleHieght > GetScreenHeight())
         {
-            paddleCentreY=GetScreenHeight()-paddleHieght;
+            paddleCentreY = GetScreenHeight() - paddleHieght;
         }
-        if(IsKeyDown(KEY_DOWN))
+        if (IsKeyDown(KEY_DOWN))
         {
-            paddleCentreY+=paddleSpeedY;
+            paddleCentreY += paddleSpeedY;
         }
-        
     }
     void checkCollisionWithPaddle()
     {
-        if(ball->getBallCentreX() - ball->getBallRadius() <= paddleCentreX+paddleWidth
-        &&
-    ball->getBallCentreY() >= paddleCentreY
-   &&
-   ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+        if (ball->getBallCentreX() - ball->getBallRadius() <= paddleCentreX + paddleWidth &&
+            ball->getBallCentreY() >= paddleCentreY &&
+            ball->getBallCentreY() <= paddleCentreY + paddleHieght)
         {
             ball->reverseBallSpeedX();
             ball->increaseBallSpeed();
@@ -355,167 +535,172 @@ class HumanPaddle:public Paddle
     }
 };
 
-class ComputerPaddle:public Paddle
+class ComputerPaddle : public Paddle
 {
-    private:
+private:
     Ball *ball;
     bool isLeftPaddle;
-    public:
- ComputerPaddle(Ball *b,int xPosition,bool isLeft) :Paddle(xPosition,125,20,(GetScreenHeight()-125)/2)
-{
-    ball=b;
-    isLeftPaddle=isLeft;
-}
+
+public:
+    ComputerPaddle(Ball *b, int xPosition, bool isLeft) : Paddle(xPosition, 125, 20, (GetScreenHeight() - 125) / 2)
+    {
+        ball = b;
+        isLeftPaddle = isLeft;
+    }
     void drawPaddle()
     {
-        DrawRectangle(paddleCentreX,paddleCentreY,paddleWidth,paddleHieght,paddleColor);
+        DrawRectangle(paddleCentreX, paddleCentreY, paddleWidth, paddleHieght, paddleColor);
     }
     void movePaddle()
     {
-       int paddleMiddle=paddleCentreY+paddleHieght/2;
-       if(ball->getBallCentreY() >= paddleMiddle+5)
-       {
-        paddleCentreY+=paddleSpeedY;
-       } 
-       else if(ball->getBallCentreY() <= paddleMiddle-5)
-       {
-        paddleCentreY-=paddleSpeedY;
-       }
-       if(paddleCentreY<=0)
-       {
-        paddleCentreY=0;
-       }
-       if(paddleCentreY+paddleHieght >=GetScreenHeight())
-       {
-        paddleCentreY=GetScreenHeight()-paddleHieght;
-       }
-    }
-   void checkCollisionWithPaddle()
-{
-    
-    if(isLeftPaddle)
-    {
-        if(ball->getBallSpeedX() < 0 &&
-           ball->getBallCentreX() - ball->getBallRadius() <= paddleCentreX + paddleWidth
-           &&
-           ball->getBallCentreY() >= paddleCentreY
-           &&
-           ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+        int paddleMiddle = paddleCentreY + paddleHieght / 2;
+        if (ball->getBallCentreY() >= paddleMiddle + 5)
         {
-            ball->reverseBallSpeedX();
-            ball->increaseBallSpeed();
+            paddleCentreY += paddleSpeedY;
+        }
+        else if (ball->getBallCentreY() <= paddleMiddle - 5)
+        {
+            paddleCentreY -= paddleSpeedY;
+        }
+        if (paddleCentreY <= 0)
+        {
+            paddleCentreY = 0;
+        }
+        if (paddleCentreY + paddleHieght >= GetScreenHeight())
+        {
+            paddleCentreY = GetScreenHeight() - paddleHieght;
         }
     }
+    void checkCollisionWithPaddle()
+    {
 
-    else
-    {
-        if(ball->getBallSpeedX() > 0 &&
-           ball->getBallCentreX() + ball->getBallRadius() >= paddleCentreX
-           &&
-           ball->getBallCentreY() >= paddleCentreY
-           &&
-           ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+        if (isLeftPaddle)
         {
-            ball->reverseBallSpeedX();
-            ball->increaseBallSpeed();
+            if (ball->getBallSpeedX() < 0 &&
+                ball->getBallCentreX() - ball->getBallRadius() <= paddleCentreX + paddleWidth &&
+                ball->getBallCentreY() >= paddleCentreY &&
+                ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+            {
+                ball->reverseBallSpeedX();
+                ball->increaseBallSpeed();
+            }
+        }
+
+        else
+        {
+            if (ball->getBallSpeedX() > 0 &&
+                ball->getBallCentreX() + ball->getBallRadius() >= paddleCentreX &&
+                ball->getBallCentreY() >= paddleCentreY &&
+                ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+            {
+                ball->reverseBallSpeedX();
+                ball->increaseBallSpeed();
+            }
         }
     }
-}
     void setAISpeed(int paddleSpeedY)
     {
-        this->paddleSpeedY=paddleSpeedY;
+        this->paddleSpeedY = paddleSpeedY;
     }
-   int getAISpeed()
-   {
-        return paddleSpeedY;    
-   } 
+    int getAISpeed()
+    {
+        return paddleSpeedY;
+    }
 };
-   
-        
-    
 
+int main()
+{
 
-
-int main () {
-
- 
-const int screenWidth = 800;
-const int screenHieght = 600;
+    const int screenWidth = 800;
+    const int screenHieght = 600;
     InitWindow(screenWidth, screenHieght, "Classic Pong:1980s");
+    InitAudioDevice();
     SetTargetFPS(60);
-Ball b1;
-HumanPaddle *player;
-player = new HumanPaddle(&b1);
+    Ball b1;
+    GameManager gameManager;
+    HumanPaddle *player;
+    player = new HumanPaddle(&b1);
 
-ComputerPaddle *aiLeft;
-aiLeft = new ComputerPaddle(&b1,25,true);
+    ComputerPaddle *aiLeft;
+    aiLeft = new ComputerPaddle(&b1, 25, true);
 
-ComputerPaddle *aiRight;
-aiRight = new ComputerPaddle(&b1,GetScreenWidth()-40,false);
-GameMenu menu;
+    ComputerPaddle *aiRight;
+    aiRight = new ComputerPaddle(&b1, GetScreenWidth() - 40, false);
+    GameMenu menu;
 
     while (WindowShouldClose() == false)
-{
-    BeginDrawing();
-    ClearBackground(BLACK);
-
-    
-    menu.Update();
-    if(menu.GetDifficulty()==EASY)
     {
-        aiRight->setAISpeed(5);
+        BeginDrawing();
+        ClearBackground(BLACK);
+
+        menu.audioManager();
+        menu.Update();
+        if (menu.GetDifficulty() == EASY)
+        {
+            aiRight->setAISpeed(5);
+        }
+        else if (menu.GetDifficulty() == MEDIUM)
+        {
+            aiRight->setAISpeed(7);
+        }
+        else
+        {
+            aiRight->setAISpeed(9);
+        }
+        menu.Draw();
+
+        if (menu.GetState() == MAIN_MENU)
+        {
+            b1.updateMenu();
+
+            aiLeft->movePaddle();
+            aiRight->movePaddle();
+
+            aiLeft->drawPaddle();
+            aiRight->drawPaddle();
+
+            aiLeft->checkCollisionWithPaddle();
+            aiRight->checkCollisionWithPaddle();
+
+            b1.drawBall();
+
+            menu.Draw();
+        }
+
+        else if (menu.IsGameStarted())
+        {
+            if (!gameManager.isGameOver())
+            {
+                b1.update();
+                b1.playBallSound();
+
+                player->movePaddle();
+                aiRight->movePaddle();
+
+                player->checkCollisionWithPaddle();
+                aiRight->checkCollisionWithPaddle();
+            }
+
+            player->drawPaddle();
+            aiRight->drawPaddle();
+
+            DrawText(TextFormat("%i", b1.getPlayerScore()), 300, 20, 40, GOLD);
+            DrawText(TextFormat("%i", b1.getComputerScore()), 500, 20, 40, GOLD);
+
+            gameManager.checkWinner(
+                b1.getPlayerScore(),
+                b1.getComputerScore());
+
+            b1.drawBall();
+        }
+        if (menu.GetState() == GAMEPLAY && IsKeyPressed(KEY_R))
+        {
+            b1.restartGame();
+            gameManager.reset();
+            menu.getGameState(MAIN_MENU);
+        }
+        EndDrawing();
     }
-    else if(menu.GetDifficulty()==MEDIUM)
-    {
-        aiRight->setAISpeed(7);
-    }
-    else
-    {
-        aiRight->setAISpeed(9);
-    }
-    menu.Draw();
 
-    if(menu.GetState() == MAIN_MENU)
-{
-    b1.update();
-
-    aiLeft->movePaddle();
-    aiRight->movePaddle();
-
-    aiLeft->drawPaddle();
-    aiRight->drawPaddle();
-
-    aiLeft->checkCollisionWithPaddle();
-    aiRight->checkCollisionWithPaddle();
-
-    b1.drawBall();
-
-    menu.Draw();
-}
-
-    else if(menu.IsGameStarted())
-{
-    
-    b1.update();
-    player->movePaddle();
-    aiRight->movePaddle();
-
-    player->drawPaddle();
-    aiRight->drawPaddle();
-DrawText(TextFormat("%i", b1.getPlayerScore()), 300, 20, 40, GOLD);
-DrawText(TextFormat("%i", b1.getComputerScore()), 500, 20, 40, GOLD);
-   
-player->checkCollisionWithPaddle();
-aiRight->checkCollisionWithPaddle();
-
-
-    
-    b1.playerWin();
-    b1.computerWin();
-    b1.resetScore();
-    b1.drawBall();
-}
-
-    EndDrawing();
-}    
+    CloseAudioDevice();
 }
