@@ -6,6 +6,7 @@ enum GameState
 {
     MAIN_MENU,
     DIFFICULTY_MENU,
+    PLAYER_MENU,
     GAMEPLAY
 };
 
@@ -15,18 +16,23 @@ enum Difficulty
     MEDIUM,
     HARD
 };
-
+enum Player
+{
+    SINGLE_PLAYER,
+    TWO_PLAYER
+};
 class GameMenu
 {
 private:
     GameState currentState;
     Difficulty selectedDifficulty;
-
+    Player selectPlayer;
     Rectangle startButton;
-
     Rectangle easyButton;
     Rectangle mediumButton;
     Rectangle hardButton;
+    Rectangle singlePlayer;
+    Rectangle multiPlayer;
     Music menuMusic;
     int selectedOption;
 
@@ -40,6 +46,8 @@ public:
         easyButton = {300, 180, 200, 60};
         mediumButton = {300, 280, 200, 60};
         hardButton = {300, 380, 200, 60};
+        singlePlayer = {300, 200, 200, 60};
+        multiPlayer = {300, 300, 200, 60};
         selectedOption = 0;
         menuMusic = LoadMusicStream("Assets/menu.mp3");
         PlayMusicStream(menuMusic);
@@ -48,7 +56,7 @@ public:
     void audioManager()
     {
         if (currentState == MAIN_MENU ||
-            currentState == DIFFICULTY_MENU)
+            currentState == DIFFICULTY_MENU || currentState == PLAYER_MENU)
         {
             if (!IsMusicStreamPlaying(menuMusic))
             {
@@ -62,6 +70,16 @@ public:
             StopMusicStream(menuMusic);
         }
     }
+    /*void resetMenu()
+{
+    selectedOption = 0;
+    currentState = MAIN_MENU;
+}*/
+    void resetDifficultyMenu()
+    {
+        selectedOption = 0;
+        currentState = MAIN_MENU;
+    }
     void Update()
     {
         Vector2 mousePos = GetMousePosition();
@@ -71,11 +89,11 @@ public:
             if (CheckCollisionPointRec(mousePos, startButton) &&
                 IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
             {
-                currentState = DIFFICULTY_MENU;
+                currentState = PLAYER_MENU;
             }
             if (IsKeyPressed(KEY_ENTER))
             {
-                currentState = DIFFICULTY_MENU;
+                currentState = PLAYER_MENU;
             }
         }
 
@@ -136,13 +154,63 @@ public:
                 currentState = GAMEPLAY;
             }
         }
+        else if (currentState == PLAYER_MENU)
+        {
+
+            if (IsKeyPressed(KEY_UP))
+            {
+
+                selectedOption--;
+                if (selectedOption < 0)
+                {
+                    selectedOption = 1;
+                }
+            }
+            if (IsKeyPressed(KEY_DOWN))
+            {
+                selectedOption++;
+                if (selectedOption > 1)
+                {
+                    selectedOption = 0;
+                }
+            }
+            if (CheckCollisionPointRec(mousePos, singlePlayer) &&
+                IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                selectPlayer = SINGLE_PLAYER;
+                currentState = DIFFICULTY_MENU;
+                resetPlayerMenu();
+            }
+            if (CheckCollisionPointRec(mousePos, multiPlayer) &&
+                IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                selectPlayer = TWO_PLAYER;
+                currentState = GAMEPLAY;
+                resetPlayerMenu();
+            }
+            if (IsKeyPressed(KEY_ENTER))
+            {
+                if (selectedOption == 0)
+                {
+                    selectPlayer = SINGLE_PLAYER;
+                    currentState = DIFFICULTY_MENU;
+                    resetPlayerMenu();
+                }
+                else if (selectedOption == 1)
+                {
+                    selectPlayer = TWO_PLAYER;
+                    currentState = GAMEPLAY;
+                    resetPlayerMenu();
+                }
+            }
+        }
     }
 
     void Draw()
     {
         if (currentState == MAIN_MENU)
         {
-            DrawText("PONG GAME", 250, 120, 50, WHITE);
+            DrawText("THE ULTIMATE PONG", 130, 120, 50, WHITE);
 
             DrawRectangleRec(startButton, DARKBLUE);
             DrawText("START", 350, 268, 25, WHITE);
@@ -151,33 +219,59 @@ public:
         else if (currentState == DIFFICULTY_MENU)
         {
             DrawText("SELECT DIFFICULTY", 180, 80, 40, WHITE);
-
+            DrawText("Use Down and Up Keys to Navaigate OR Mouse Click", 150, 140, 20, GOLD);
             DrawRectangleRec(easyButton, LIGHTGRAY);
             DrawRectangleRec(mediumButton, LIGHTGRAY);
             DrawRectangleRec(hardButton, LIGHTGRAY);
             if (selectedOption == 0)
             {
-                DrawRectangleLinesEx(easyButton, 4, YELLOW);
+                DrawRectangleLinesEx(easyButton, 8, YELLOW);
+                DrawText("Select This Mode If You are new to Gaming", 200, 250, 20, GOLD);
             }
             if (selectedOption == 1)
             {
-                DrawRectangleLinesEx(mediumButton, 4, YELLOW);
+                DrawRectangleLinesEx(mediumButton, 8, YELLOW);
+                DrawText("Select This Mode If You Want A Balanced Gameplay", 150, 350, 20, GOLD);
             }
             if (selectedOption == 2)
             {
-                DrawRectangleLinesEx(hardButton, 4, YELLOW);
+                DrawRectangleLinesEx(hardButton, 8, YELLOW);
+                DrawText("Select This Mode If You've Got Guts! (AI shows No Mercy)", 110, 450, 20, GOLD);
             }
 
-            DrawText("EASY", 360, 198, 25, BLACK);
-            DrawText("MEDIUM", 340, 298, 25, BLACK);
-            DrawText("HARD", 360, 398, 25, BLACK);
+            DrawText("NOOB", 360, 198, 25, BLACK);
+
+            DrawText("REGULAR", 340, 298, 25, BLACK);
+            DrawText("PRO", 360, 398, 25, BLACK);
+        }
+        if (currentState == PLAYER_MENU)
+        {
+
+            DrawText("SELECT YOUR OPONENT!", 240, 50, 30, GOLD);
+            DrawRectangleRec(singlePlayer, GRAY);
+            DrawRectangleRec(multiPlayer, GRAY);
+            DrawText("SINGLE PLAYER", 320, 220, 20, BLACK);
+            DrawText("TWO PLAYER", 320, 320, 20, BLACK);
+            if (selectedOption == 0)
+            {
+                DrawRectangleLinesEx(singlePlayer, 8, YELLOW);
+            }
+            else if (selectedOption == 1)
+            {
+                DrawRectangleLinesEx(multiPlayer, 8, YELLOW);
+            }
         }
         if (currentState == GAMEPLAY)
         {
             DrawText("PRESS R TO RESTART GAME", 250, 80, 20, GOLD);
+            DrawText("PRESS D TO SWITCH DIFFICULITY", 240, 110, 20, BLUE);
+            DrawText("PRESS P To CHANGE PLAYER MODE",230,550,20,RED);
         }
     }
-
+    void resetPlayerMenu()
+    {
+        selectedOption = 0;
+    }
     Difficulty GetDifficulty()
     {
         return selectedDifficulty;
@@ -194,6 +288,10 @@ public:
     void getGameState(GameState state)
     {
         currentState = state;
+    }
+    Player GetPlayerMode()
+    {
+        return selectPlayer;
     }
     ~GameMenu()
     {
@@ -409,7 +507,7 @@ public:
 
     void checkWinner(int playerScore, int computerScore)
     {
-        // Sirf ek baar trigger hoga
+
         if (!showMessage)
         {
             if (playerScore >= 10)
@@ -446,8 +544,6 @@ public:
                          50,
                          RED);
             }
-
-            
         }
     }
 
@@ -534,7 +630,60 @@ public:
         }
     }
 };
+class HumanPaddle2 : public Paddle
+{
+private:
+    Ball *ball;
 
+public:
+    HumanPaddle2(Ball *b)
+        : Paddle(GetScreenWidth() - 40, 125, 20,
+                 (GetScreenHeight() - 125) / 2)
+    {
+        ball = b;
+    }
+
+    void drawPaddle()
+    {
+        DrawRectangle(paddleCentreX, paddleCentreY,
+                      paddleWidth, paddleHieght, paddleColor);
+    }
+
+    void movePaddle()
+    {
+        if (IsKeyDown(KEY_W))
+        {
+            paddleCentreY -= paddleSpeedY;
+        }
+
+        if (IsKeyDown(KEY_S))
+        {
+            paddleCentreY += paddleSpeedY;
+        }
+
+        if (paddleCentreY < 0)
+        {
+            paddleCentreY = 0;
+        }
+
+        if (paddleCentreY + paddleHieght > GetScreenHeight())
+        {
+            paddleCentreY = GetScreenHeight() - paddleHieght;
+        }
+    }
+
+    void checkCollisionWithPaddle()
+    {
+        if (ball->getBallSpeedX() > 0 &&
+            ball->getBallCentreX() + ball->getBallRadius() >= paddleCentreX &&
+            ball->getBallCentreY() >= paddleCentreY &&
+            ball->getBallCentreY() <= paddleCentreY + paddleHieght)
+        {
+            ball->reverseBallSpeedX();
+            ball->increaseBallSpeed();
+        }
+    }
+};
 class ComputerPaddle : public Paddle
 {
 private:
@@ -620,7 +769,8 @@ int main()
     GameManager gameManager;
     HumanPaddle *player;
     player = new HumanPaddle(&b1);
-
+    HumanPaddle2 *player2;
+    player2 = new HumanPaddle2(&b1);
     ComputerPaddle *aiLeft;
     aiLeft = new ComputerPaddle(&b1, 25, true);
 
@@ -641,7 +791,7 @@ int main()
         }
         else if (menu.GetDifficulty() == MEDIUM)
         {
-            aiRight->setAISpeed(7);
+            aiRight->setAISpeed(8);
         }
         else
         {
@@ -675,14 +825,33 @@ int main()
                 b1.playBallSound();
 
                 player->movePaddle();
-                aiRight->movePaddle();
 
-                player->checkCollisionWithPaddle();
-                aiRight->checkCollisionWithPaddle();
+                if (menu.GetPlayerMode() == SINGLE_PLAYER)
+                {
+                    aiRight->movePaddle();
+
+                    player->checkCollisionWithPaddle();
+                    aiRight->checkCollisionWithPaddle();
+                }
+                else
+                {
+                    player2->movePaddle();
+
+                    player->checkCollisionWithPaddle();
+                    player2->checkCollisionWithPaddle();
+                }
             }
 
             player->drawPaddle();
-            aiRight->drawPaddle();
+
+            if (menu.GetPlayerMode() == SINGLE_PLAYER)
+            {
+                aiRight->drawPaddle();
+            }
+            else
+            {
+                player2->drawPaddle();
+            }
 
             DrawText(TextFormat("%i", b1.getPlayerScore()), 300, 20, 40, GOLD);
             DrawText(TextFormat("%i", b1.getComputerScore()), 500, 20, 40, GOLD);
@@ -697,7 +866,24 @@ int main()
         {
             b1.restartGame();
             gameManager.reset();
+            menu.resetDifficultyMenu();
             menu.getGameState(MAIN_MENU);
+        }
+        if (menu.GetState() == GAMEPLAY && IsKeyPressed(KEY_D))
+        {
+            b1.restartGame();
+            gameManager.reset();
+            menu.resetPlayerMenu();
+
+            menu.getGameState(DIFFICULTY_MENU);
+        }
+        if(menu.GetState()==GAMEPLAY && IsKeyPressed(KEY_P))
+        {
+            b1.restartGame();
+            gameManager.reset();
+            menu.resetPlayerMenu();
+            
+            menu.getGameState(PLAYER_MENU);
         }
         EndDrawing();
     }
