@@ -70,11 +70,7 @@ public:
             StopMusicStream(menuMusic);
         }
     }
-    /*void resetMenu()
-{
-    selectedOption = 0;
-    currentState = MAIN_MENU;
-}*/
+    
     void resetDifficultyMenu()
     {
         selectedOption = 0;
