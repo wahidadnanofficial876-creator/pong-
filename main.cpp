@@ -4,7 +4,7 @@ using namespace std;
 
 enum GameState
 {
-    MAIN_MENU,
+    MAIN_MENU, 
     DIFFICULTY_MENU,
     PLAYER_MENU,
     GAMEPLAY
@@ -243,7 +243,8 @@ public:
         if (currentState == PLAYER_MENU)
         {
 
-            DrawText("SELECT YOUR OPONENT!", 240, 50, 30, GOLD);
+            DrawText("SELECT YOUR OPONENT!", 230, 50, 30, GOLD);
+            DrawText("Use Down and Up Keys to Navaigate OR Mouse Click", 150, 100, 20, GOLD);
             DrawRectangleRec(singlePlayer, GRAY);
             DrawRectangleRec(multiPlayer, GRAY);
             DrawText("SINGLE PLAYER", 320, 220, 20, BLACK);
@@ -506,7 +507,8 @@ public:
 
         if (!showMessage)
         {
-            if (playerScore >= 10)
+            
+            if (playerScore >= 10 )
             {
                 winner = PLAYER;
                 showMessage = true;
